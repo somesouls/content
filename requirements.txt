@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+apscheduler
+pyyaml
+python-dotenv
+requests
+jinja2
+Pillow
+yt-dlp
+# opsional (aktifkan sesuai kebutuhan):
+# faster-whisper      # auto-subtitle
+# TTS                 # Coqui XTTS voice clone
+# markdown            # ebook -> html
+# weasyprint          # ebook -> pdf

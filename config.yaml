@@ -1,0 +1,15 @@
+account:
+  handle: "@senior kecemasan"
+  theme: "penyintas hidup berantakan & attachment style"
+  audience: "anak muda 18-30 yang sedang healing"
+
+# content pillars dipakai untuk memilih tema tiap hari
+pillars:
+  - "relatable pain"
+  - "reframe / healing"
+  - "story penyintas"
+  - "micro-edukasi psikologi"
+  - "attachment style"
+
+ebook:
+  day: "saturday"

@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+output/*
+!output/.gitkeep
+data/*
+!data/.gitkeep
+assets/fonts/*.ttf
+assets/voice/*.wav
+*.mp4
+*.png
