@@ -23,7 +23,7 @@ def _elevenlabs(text, out_path=None):
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if not settings.elevenlabs_key or not settings.elevenlabs_voice_id:
         raise RuntimeError("Isi ELEVENLABS_API_KEY & ELEVENLABS_VOICE_ID di .env.")
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{settings.elevenlabs_voice_id}"
+    url = "https://api.elevenlabs.io/v1/text-to-speech/" + settings.elevenlabs_voice_id
     headers = {
         "xi-api-key": settings.elevenlabs_key,
         "Content-Type": "application/json",
