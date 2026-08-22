@@ -1,5 +1,7 @@
-"""Render carousel jadi slide PNG 1080x1350 (Pillow)."""
+"""Render carousel jadi slide PNG 1080x1350 (Pillow), opsional background AI."""
 import datetime
+import shutil
+import subprocess
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -47,8 +49,19 @@ def _wrap(draw, text, font, max_w):
     return lines
 
 
-def _slide(text, idx, total, kind="body"):
-    img = Image.new("RGB", (W, H), BG)
+def _prep_bg(bg_path):
+    """Cover-crop ke 1080x1350 lalu gelapkan agar teks terbaca."""
+    img = Image.open(bg_path).convert("RGB")
+    scale = max(W / img.width, H / img.height)
+    img = img.resize((int(img.width * scale), int(img.height * scale)))
+    left = (img.width - W) // 2
+    top = (img.height - H) // 2
+    img = img.crop((left, top, left + W, top + H))
+    return Image.blend(img, Image.new("RGB", (W, H), (0, 0, 0)), 0.55)
+
+
+def _slide(text, idx, total, kind="body", bg=None):
+    img = _prep_bg(bg) if bg else Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(img)
     d.rectangle([0, 0, W, 14], fill=ACCENT)
     margin = 90
@@ -74,12 +87,55 @@ def render_carousel(idea, out_dir=None):
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     out_dir = Path(out_dir or (settings.output_dir / f"carousel-{stamp}"))
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    bg_path = None
+    if settings.image_provider != "none":
+        try:
+            from . import images
+
+            vp = idea.get("visual_prompt") or (
+                f"moody aesthetic background, {idea.get('pillar', '')}, dark cinematic, "
+                "soft grain, calm, no text, no words, no letters"
+            )
+            bg_path = images.generate_image(vp, out_dir / "bg.png", W, H)
+        except Exception as e:  # noqa: BLE001
+            print(f"[carousel] bg AI dilewati: {e}")
+            bg_path = None
+
     parts = [("hook", idea.get("hook", ""))]
     parts += [("body", s) for s in idea.get("slides", [])]
     parts.append(("cta", idea.get("cta", "")))
     total = len(parts)
     for i, (kind, text) in enumerate(parts, start=1):
-        _slide(text, i, total, kind).save(out_dir / f"slide-{i:02d}.png")
+        _slide(text, i, total, kind, bg=bg_path).save(out_dir / f"slide-{i:02d}.png")
     caption = (idea.get("caption", "") + "\n\n" + " ".join(idea.get("hashtags", []))).strip()
     (out_dir / "caption.txt").write_text(caption, encoding="utf-8")
     return out_dir
+
+
+def slides_to_video(slide_dir, seconds=3, out_path=None):
+    """Ubah slide PNG jadi video vertikal 1080x1920 (buat TikTok tanpa hosting)."""
+    if not shutil.which("ffmpeg"):
+        raise RuntimeError("ffmpeg belum terpasang.")
+    slide_dir = Path(slide_dir)
+    slides = sorted(slide_dir.glob("slide-*.png"))
+    if not slides:
+        raise RuntimeError("Tidak ada slide untuk dijadikan video.")
+    concat = slide_dir / "slides.txt"
+    lines = []
+    for s in slides:
+        lines.append(f"file '{s.name}'")
+        lines.append(f"duration {seconds}")
+    lines.append(f"file '{slides[-1].name}'")
+    concat.write_text("\n".join(lines), encoding="utf-8")
+    out_path = Path(out_path or (slide_dir / "carousel.mp4"))
+    subprocess.run(
+        [
+            "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", str(concat),
+            "-vf", "scale=1080:1350,pad=1080:1920:0:285:color=0x111117,format=yuv420p",
+            "-r", "30", str(out_path),
+        ],
+        check=True,
+        cwd=str(slide_dir),
+    )
+    return out_path

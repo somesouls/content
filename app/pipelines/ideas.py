@@ -1,4 +1,4 @@
-"""Generate ide + script konten carousel."""
+"""Generate ide + script konten (hook, slides dinamis, CTA, caption, visual)."""
 import random
 from pathlib import Path
 
@@ -20,6 +20,7 @@ FALLBACK = [
         "cta": "Simpan ini. Kamu nggak berlebihan, kamu cuma belum merasa aman.",
         "caption": "Anxious attachment itu bukan aib. Ini pola yang bisa dilatih ulang pelan-pelan.",
         "hashtags": ["#attachmentstyle", "#anxiousattachment", "#healing", "#selfawareness", "#mentalhealthid"],
+        "visual_prompt": "moody dark bedroom at night, phone glow, lonely aesthetic, cinematic, no text",
     },
     {
         "hook": "Hidup berantakan bukan akhir cerita",
@@ -32,6 +33,7 @@ FALLBACK = [
         "cta": "Satu langkah kecil hari ini sudah cukup. Beneran.",
         "caption": "Buat kamu yang lagi ngerasa semuanya berantakan. Pelan-pelan aja ya.",
         "hashtags": ["#penyintas", "#healingjourney", "#selfhealing", "#tumbuh", "#mentalhealthid"],
+        "visual_prompt": "soft morning light through window, messy cozy room, hopeful mood, cinematic, no text",
     },
 ]
 
@@ -40,10 +42,12 @@ def generate_idea(pillar=None):
     pillar = pillar or random.choice(settings.pillars or ["healing"])
     prompt = (
         f"Buat 1 konten carousel untuk pillar: '{pillar}'. "
-        "Sertakan 4-6 slide isi. Balas HANYA JSON sesuai format."
+        "Tentukan sendiri jumlah slide yang paling pas (4-8) sesuai bobot topik. "
+        "Balas HANYA JSON sesuai format (termasuk field visual_prompt)."
     )
     data = generate_json(SYSTEM, prompt)
-    if not data or "hook" not in data:
+    if not data or "hook" not in data or not data.get("slides"):
         data = dict(random.choice(FALLBACK))
     data["pillar"] = pillar
+    data.setdefault("hashtags", [])
     return data

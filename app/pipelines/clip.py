@@ -1,8 +1,8 @@
-"""Format B: potong klip dari video (yt-dlp + ffmpeg) dengan kredit sumber.
+"""Format B: potong klip dari video (yt-dlp + ffmpeg) + kredit sumber + subtitle.
 
 DEFAULT hanya mengizinkan video Creative Commons. Kredit sumber SELALU
-ditambahkan (overlay di layar + attribution.txt). Ingat: mencantumkan kredit
-TIDAK memberi lisensi hak cipta. Gunakan konten milikmu / berlisensi / CC.
+ditambahkan (overlay + attribution.txt). Kredit TIDAK memberi lisensi hak cipta;
+gunakan konten milikmu / berlisensi / CC.
 """
 import datetime
 import json
@@ -67,4 +67,12 @@ def clip_from_youtube(url, start="00:00:05", duration=45, only_creative_commons=
         ],
         check=True,
     )
-    return work
+
+    final = out
+    try:
+        from . import subtitles
+
+        final = subtitles.add_subtitles(out)
+    except Exception as e:  # noqa: BLE001
+        print(f"[clip] subtitle dilewati: {e}")
+    return final
