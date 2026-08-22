@@ -1,8 +1,10 @@
-"""Format C: buat video dari aset lama + suara (Coqui XTTS) tanpa rekam ulang."""
+"""Format C: buat video dari aset lama + suara (ElevenLabs / Coqui XTTS)."""
 import datetime
 import shutil
 import subprocess
 from pathlib import Path
+
+import requests
 
 from ..config import settings
 
@@ -10,6 +12,35 @@ _ASSETS = Path(__file__).resolve().parents[2] / "assets"
 
 
 def synth_voice(text, out_path=None):
+    """Dispatch ke provider TTS sesuai .env."""
+    if settings.voice_provider == "elevenlabs":
+        return _elevenlabs(text, out_path)
+    return _xtts(text, out_path)
+
+
+def _elevenlabs(text, out_path=None):
+    out_path = Path(out_path or (settings.output_dir / "voice.mp3"))
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    if not settings.elevenlabs_key or not settings.elevenlabs_voice_id:
+        raise RuntimeError("Isi ELEVENLABS_API_KEY & ELEVENLABS_VOICE_ID di .env.")
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{settings.elevenlabs_voice_id}"
+    headers = {
+        "xi-api-key": settings.elevenlabs_key,
+        "Content-Type": "application/json",
+        "Accept": "audio/mpeg",
+    }
+    body = {
+        "text": text,
+        "model_id": settings.elevenlabs_model,
+        "voice_settings": {"stability": 0.5, "similarity_boost": 0.75},
+    }
+    r = requests.post(url, headers=headers, json=body, timeout=180)
+    r.raise_for_status()
+    out_path.write_bytes(r.content)
+    return out_path
+
+
+def _xtts(text, out_path=None):
     out_path = Path(out_path or (settings.output_dir / "voice.wav"))
     out_path.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -53,6 +84,6 @@ def assemble_video(audio_path, background=None, out_path=None):
 
 
 def make_from_assets(text, background=None):
-    """Pakai suara clone kamu + aset video/gambar lama jadi 1 video baru."""
+    """Pakai suara (clone) + aset video/gambar lama jadi 1 video baru."""
     audio = synth_voice(text)
     return assemble_video(audio, background)

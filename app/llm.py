@@ -1,4 +1,4 @@
-"""Klien LLM: Azure OpenAI / Ollama / fallback."""
+"""Klien LLM: Gemini (Google AI Studio) / Azure OpenAI / Ollama / fallback."""
 import json
 
 import requests
@@ -9,6 +9,8 @@ from .config import settings
 def chat(system: str, user: str, temperature: float = 0.9) -> str:
     provider = settings.llm_provider
     try:
+        if provider == "gemini":
+            return _gemini(system, user, temperature)
         if provider == "azure":
             return _azure(system, user, temperature)
         if provider == "ollama":
@@ -17,6 +19,22 @@ def chat(system: str, user: str, temperature: float = 0.9) -> str:
         print(f"[llm] error ({provider}): {e}. Pakai fallback.")
         return ""
     return ""
+
+
+def _gemini(system, user, temperature):
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        f"{settings.gemini_model}:generateContent?key={settings.gemini_key}"
+    )
+    body = {
+        "systemInstruction": {"parts": [{"text": system}]},
+        "contents": [{"role": "user", "parts": [{"text": user}]}],
+        "generationConfig": {"temperature": temperature},
+    }
+    r = requests.post(url, json=body, timeout=120)
+    r.raise_for_status()
+    data = r.json()
+    return data["candidates"][0]["content"]["parts"][0]["text"]
 
 
 def _azure(system, user, temperature):
