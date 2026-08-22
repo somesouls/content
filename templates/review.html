@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>senior kecemasan — review</title>
+<style>
+  body{font-family:system-ui,Arial,sans-serif;background:#111117;color:#eee;margin:0;padding:20px}
+  h1{color:#ff8a65;font-size:20px}
+  .bar{margin:12px 0 20px}
+  .card{background:#1b1b22;border:1px solid #2a2a33;border-radius:14px;padding:16px;margin-bottom:16px;display:flex;gap:16px}
+  .card img{width:150px;border-radius:10px;object-fit:cover}
+  .tag{display:inline-block;background:#2a2a33;color:#ff8a65;padding:2px 8px;border-radius:999px;font-size:12px;margin-right:6px}
+  .status{font-size:12px;color:#9a9aa5}
+  h3{margin:8px 0}
+  button{background:#ff8a65;border:0;color:#111;padding:8px 14px;border-radius:8px;font-weight:600;cursor:pointer}
+  button.sec{background:#2a2a33;color:#eee}
+  form{display:inline}
+</style>
+</head>
+<body>
+  <h1>{{ account.get('handle','@senior kecemasan') }} — Review</h1>
+  <div class="bar">
+    <form method="post" action="/generate"><button>+ Generate sekarang</button></form>
+  </div>
+  {% for it in items %}
+  <div class="card">
+    {% if it.preview %}<img src="{{ it.preview }}" alt="preview">{% endif %}
+    <div style="flex:1">
+      <div>
+        <span class="tag">{{ it.format }}</span>
+        <span class="tag">{{ it.pillar }}</span>
+        <span class="status">#{{ it.id }} · {{ it.status }}</span>
+      </div>
+      <h3>{{ it.title }}</h3>
+      <p>{{ it.caption }}</p>
+      <div>
+        {% if it.status == 'pending' %}
+          <form method="post" action="/approve/{{ it.id }}"><button>Approve</button></form>
+          <form method="post" action="/reject/{{ it.id }}"><button class="sec">Reject</button></form>
+        {% elif it.status == 'approved' %}
+          <form method="post" action="/post-now/{{ it.id }}"><button>Post sekarang</button></form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <p>Belum ada konten. Klik “Generate sekarang”.</p>
+  {% endfor %}
+</body>
+</html>
