@@ -10,22 +10,34 @@ from .pipelines import carousel, ebook, ideas
 from .publish import tiktok
 
 
+def _voiceover_text(idea):
+    parts = [idea.get("hook", "")] + list(idea.get("slides", [])) + [idea.get("cta", "")]
+    return " ".join(p for p in parts if p)
+
+
 def job_generate():
-    """Buat 1 draf carousel harian."""
+    """Buat 1 draf konten harian (carousel / voiceover sesuai DAILY_FORMAT)."""
     idea = ideas.generate_idea()
-    slide_dir = carousel.render_carousel(idea)
+    if settings.daily_format == "voiceover":
+        from .pipelines import voiceover
+
+        asset = voiceover.make_from_assets(_voiceover_text(idea))
+        fmt = "voiceover"
+    else:
+        asset = carousel.render_carousel(idea)
+        fmt = "carousel"
     status = "pending" if settings.review_required else "approved"
     item_id = store.add_item(
         pillar=idea.get("pillar"),
-        format="carousel",
+        format=fmt,
         title=idea.get("hook"),
         caption=idea.get("caption"),
         hashtags=idea.get("hashtags"),
-        asset_path=str(slide_dir),
+        asset_path=str(asset),
         status=status,
         scheduled_for=datetime.date.today().isoformat(),
     )
-    print(f"[generate] item #{item_id} ({status}): {idea.get('hook')}")
+    print(f"[generate] item #{item_id} ({fmt}/{status}): {idea.get('hook')}")
     return item_id
 
 

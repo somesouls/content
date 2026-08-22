@@ -21,8 +21,7 @@ _YAML = _load_yaml()
 
 
 class Settings:
-    # ==== LLM (teks) ====
-    # provider: gemini | azure | ollama | fallback
+    # ==== LLM (teks) ==== provider: gemini | azure | ollama | fallback
     llm_provider = os.getenv("LLM_PROVIDER", "fallback")
     gemini_key = os.getenv("GEMINI_API_KEY", "")
     gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
@@ -33,18 +32,31 @@ class Settings:
     ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
     ollama_model = os.getenv("OLLAMA_MODEL", "qwen2.5:7b")
 
-    # ==== Voice / TTS ====
-    # provider: elevenlabs | xtts
+    # ==== Voice / TTS ==== provider: elevenlabs | xtts
     voice_provider = os.getenv("VOICE_PROVIDER", "elevenlabs")
     elevenlabs_key = os.getenv("ELEVENLABS_API_KEY", "")
     elevenlabs_voice_id = os.getenv("ELEVENLABS_VOICE_ID", "")
     elevenlabs_model = os.getenv("ELEVENLABS_MODEL", "eleven_multilingual_v2")
+
+    # ==== Images (background AI) ==== provider: pollinations | gemini | none
+    image_provider = os.getenv("IMAGE_PROVIDER", "pollinations")
+    image_model = os.getenv("IMAGE_MODEL", "imagen-3.0-generate-002")
+
+    # ==== Subtitles (auto) ====
+    subtitles_enabled = os.getenv("SUBTITLES_ENABLED", "true").lower() == "true"
+    whisper_model = os.getenv("WHISPER_MODEL", "small")
+
+    # ==== Format harian ==== carousel | voiceover
+    daily_format = os.getenv("DAILY_FORMAT", "carousel")
 
     # ==== Posting ====
     post_time = os.getenv("POST_TIME", "19:00")
     timezone = os.getenv("TIMEZONE", "Asia/Jakarta")
     tiktok_provider = os.getenv("TIKTOK_PROVIDER", "manual")
     tiktok_token = os.getenv("TIKTOK_ACCESS_TOKEN", "")
+    # privacy: SELF_ONLY | PUBLIC_TO_EVERYONE | MUTUAL_FOLLOW_FRIENDS | FOLLOWER_OF_CREATOR
+    tiktok_privacy = os.getenv("TIKTOK_PRIVACY", "SELF_ONLY")
+    public_base_url = os.getenv("PUBLIC_BASE_URL", "")
 
     # ==== Server ====
     host = os.getenv("HOST", "0.0.0.0")

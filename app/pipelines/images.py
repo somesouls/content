@@ -38,8 +38,9 @@ def generate_image(prompt, out_path, width=1080, height=1350):
 def _pollinations(prompt, out_path, width, height):
     enc = urllib.parse.quote(prompt)
     url = (
-        f"https://image.pollinations.ai/prompt/{enc}"
-        f"?width={width}&height={height}&nologo=true"
+        "https://image.pollinations.ai/prompt/"
+        + enc
+        + f"?width={width}&height={height}&nologo=true"
     )
     r = requests.get(url, timeout=180)
     r.raise_for_status()

@@ -1,88 +1,86 @@
 # senior kecemasan — mesin konten otomatis
 
-Sistem semi-otomatis untuk akun TikTok **@senior kecemasan** (tema: penyintas hidup berantakan & attachment style):
+Sistem semi-otomatis untuk akun TikTok **@senior kecemasan** (tema: penyintas hidup berantakan & attachment style).
 
-- 1 konten/hari: **carousel**, **klip video**, atau **voiceover** dari aset kamu.
-- Auto-posting jam **19.00** (folder `READY_TO_POST` / scheduler pihak ketiga, atau TikTok API).
-- Dashboard **review** untuk approve dari HP sebelum tayang.
+**Semua otomatis:** jumlah slide, hook, CTA, caption, hashtag, background AI, subtitle, dan posting jam 19.00 — semua digenerate & dijadwalkan sendiri. Kamu tinggal review (opsional) dari HP.
+
+- 1 konten/hari: **carousel** atau **voiceover** (bisa dirotasi).
+- **Background AI** otomatis (Pollinations gratis / Gemini Imagen).
+- **Auto-subtitle** (Whisper) untuk klip & voiceover.
+- **Auto-posting** ke TikTok via Content Posting API (video FILE_UPLOAD / foto PULL_FROM_URL).
 - Generator **ebook bergambar mingguan** (PDF).
 
-> ⚠️ Tema mental health: konten wajib edukatif & suportif, BUKAN diagnosis/terapi. Disclaimer + kontak darurat (119 ext 8) otomatis muncul di slide penutup. Tetap review sebelum posting.
+> ⚠️ Tema mental health: konten wajib edukatif & suportif, BUKAN diagnosis/terapi. Disclaimer + kontak 119 ext 8 otomatis di slide penutup. Review sebelum publik.
 
-## 1) Install (di PC-GPU kamu)
-
+## 1) Install
 ```bash
 git clone https://github.com/somesouls/content.git
 cd content
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements.txt   # butuh ffmpeg & (untuk klip) yt-dlp di sistem
 cp .env.example .env
 ```
 
-## 2) Isi API key di `.env`
-
-| Kebutuhan | Env | Cara dapat |
+## 2) Isi `.env`
+| Fitur | Env | Catatan |
 | --- | --- | --- |
-| Teks (script/ide/ebook) | `GEMINI_API_KEY` | https://aistudio.google.com/app/apikey |
-| Suara (voiceover) | `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID` | https://elevenlabs.io |
-| Posting API (opsional) | `TIKTOK_ACCESS_TOKEN` | https://developers.tiktok.com |
-
-Default `LLM_PROVIDER=gemini` dan `VOICE_PROVIDER=elevenlabs`. Alternatif: `azure`, `ollama` (LLM lokal di GPU), atau `xtts` (voice clone lokal). Set `LLM_PROVIDER=fallback` untuk tes tanpa API.
+| Teks (ide/script/ebook) | `GEMINI_API_KEY` | aistudio.google.com/app/apikey |
+| Suara GRATIS (default) | `VOICE_PROVIDER=xtts` | jalan di GPU-mu; clone suaramu via `assets/voice/ref.wav` |
+| Suara premium | `VOICE_PROVIDER=elevenlabs` + key | kuota free kecil |
+| Background AI (default) | `IMAGE_PROVIDER=pollinations` | GRATIS, tanpa key |
+| Subtitle | `SUBTITLES_ENABLED=true` | Whisper (`faster-whisper`) |
+| Auto-post TikTok | `TIKTOK_PROVIDER=api` + `TIKTOK_ACCESS_TOKEN` | lihat bagian TikTok |
 
 ## 3) Tes cepat (buktikan jalan)
-
 ```bash
-python selftest.py           # generate ide (LLM) + render carousel PNG
+python selftest.py           # generate ide (LLM) + background AI + render carousel
 python selftest.py --voice   # sekalian tes TTS
 ```
-Slide muncul di `output/carousel-*/`.
+Hasil di `output/carousel-*/`.
 
-## 4) Jalankan sistem
-
+## 4) Jalankan
 ```bash
-python run.py
+python run.py    # scheduler + dashboard
 ```
 Dashboard: http://localhost:8000
 
-### Alur harian
-1. **08:00** sistem generate draf → status `pending`.
-2. Kamu **Approve/Reject** dari dashboard (HP).
-3. **19.00** konten approved otomatis dipublish.
+### Alur harian otomatis
+1. **08:00** — generate draf (carousel/voiceover) + background AI + subtitle → `pending`.
+2. Kamu **Approve** dari HP (atau set `REVIEW_REQUIRED=false` untuk full-otomatis).
+3. **19.00** — auto-post ke TikTok.
+4. **Sabtu 10:00** — ebook mingguan.
 
-Full-otomatis tanpa review: set `REVIEW_REQUIRED=false` (tidak disarankan untuk topik mental health).
+## Suara: ElevenLabs vs XTTS (gratis)
+- `VOICE_PROVIDER=elevenlabs`: kualitas tinggi, tapi kuota free kecil (harian kemungkinan perlu paket bayar).
+- `VOICE_PROVIDER=xtts`: **gratis**, jalan di GPU-mu, dan bisa **clone suaramu** — taruh sample bersih 10-30 detik di `assets/voice/ref.wav`. Butuh `pip install TTS`.
 
-## Format konten
-- **Carousel** (default, paling aman) — Pillow, tanpa dependensi berat.
-- **Klip video** (`app/pipelines/clip.py`) — yt-dlp + ffmpeg. **Default hanya video Creative Commons** + **kredit sumber** otomatis (overlay + `attribution.txt`). Kredit TIDAK memberi lisensi hak cipta — pakai konten milikmu / berlisensi / CC.
-- **Voiceover** (`app/pipelines/voiceover.py`) — ElevenLabs (atau XTTS lokal untuk clone suaramu) + ffmpeg. "Tanpa rekam ulang" pakai aset lama kamu.
+## Auto-subtitle (Whisper)
+Aktif default (`SUBTITLES_ENABLED=true`). Untuk klip & voiceover: audio ditranskrip `faster-whisper` (Indonesia) → SRT → di-burn ke video. Atur akurasi via `WHISPER_MODEL`.
 
-## Ebook mingguan
-Tiap Sabtu 10:00 → outline → draf per bab (LLM) → PDF (WeasyPrint, opsional). Output di `output/ebook-*/`. **Edit dulu untuk akurasi & empati** sebelum dijual.
+## Background AI
+`IMAGE_PROVIDER=pollinations` (gratis) atau `gemini` (Imagen). Prompt visual dibuat otomatis oleh LLM (`visual_prompt`), lalu digelapkan agar teks terbaca. `none` untuk mematikan.
 
-## Auto-posting TikTok
-- **manual** (default): konten approved dipindah ke `output/READY_TO_POST/`. Upload manual / scheduler (Metricool/Publer/Buffer).
-- **api**: set `TIKTOK_PROVIDER=api` + `TIKTOK_ACCESS_TOKEN`, lalu lengkapi `app/publish/tiktok.py` sesuai TikTok Content Posting API (butuh approval developer).
+## Auto-posting TikTok (Content Posting API)
+1. Daftar app di https://developers.tiktok.com, aktifkan scope `video.publish` (+ `photo.publish` jika perlu), dapatkan **access token**.
+2. Set `TIKTOK_PROVIDER=api`, `TIKTOK_ACCESS_TOKEN=...`.
+3. **Privacy:** app yang belum diaudit TikTok **hanya boleh `SELF_ONLY`** (draft privat). Setelah audit lolos, ganti ke `PUBLIC_TO_EVERYONE`.
+4. **Video** pakai FILE_UPLOAD (tanpa hosting). **Carousel foto** butuh URL publik (`PUBLIC_BASE_URL`, arahkan domainmu ke server `/output`). Jika `PUBLIC_BASE_URL` kosong, slide otomatis diubah jadi video lalu diupload sebagai video — tetap full otomatis.
+
+## Format klip video
+`app/pipelines/clip.py` — **default hanya video Creative Commons** + kredit sumber otomatis (overlay + `attribution.txt`) + subtitle. Kredit TIDAK memberi lisensi hak cipta; pakai konten milikmu/berlisensi/CC.
 
 ## Struktur
 ```
-run.py                 # start scheduler + dashboard
-selftest.py            # cek cepat pipeline
+run.py / selftest.py
 app/
-  config.py            # baca .env + config.yaml
-  llm.py               # gemini / azure / ollama / fallback
-  scheduler.py         # jadwal generate (08:00), post (19:00), ebook (Sabtu)
-  server.py            # dashboard review (FastAPI)
-  store.py             # sqlite log konten
-  review.py
-  pipelines/           # ideas, carousel, clip, voiceover, ebook
+  config.py llm.py scheduler.py server.py store.py review.py
+  pipelines/  ideas carousel clip voiceover ebook images subtitles
   publish/tiktok.py
-prompts/               # persona & instruksi ebook
-templates/review.html
-config.yaml            # identitas akun + content pillars
+prompts/ templates/ config.yaml
 ```
 
 ## Catatan legal & etika
 - Hak cipta: jangan repost video/musik orang tanpa izin.
-- Mental health: jangan diagnosa / janji sembuh; disclaimer + kontak 119 ext 8 sudah otomatis.
-- Suara/wajah: hanya milikmu sendiri.
-- Ikuti label konten AI TikTok bila relevan.
+- Mental health: jangan diagnosa/janji sembuh; disclaimer + 119 ext 8 otomatis.
+- Suara/wajah: hanya milikmu.
+- Patuhi label konten AI TikTok bila relevan.

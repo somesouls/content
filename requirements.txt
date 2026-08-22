@@ -7,8 +7,9 @@ requests
 jinja2
 Pillow
 yt-dlp
-# opsional (aktifkan sesuai kebutuhan):
-# faster-whisper      # auto-subtitle
-# TTS                 # Coqui XTTS voice clone
-# markdown            # ebook -> html
-# weasyprint          # ebook -> pdf
+faster-whisper
+# ---- opsional: voice clone lokal (gratis, berat, butuh GPU + torch) ----
+# TTS
+# ---- opsional: ebook -> PDF ----
+# markdown
+# weasyprint
